@@ -20,16 +20,23 @@ import "glad"
 main :: proc() {
     context.logger = log.create_console_logger()
     defer log.destroy_console_logger(context.logger)
-
+    
     if !sdl3.Init(sdl3.INIT_VIDEO) {
         log.fatalf("Failed to initialize SDL3, message: %s", sdl3.GetError())
         return
     }
     defer sdl3.Quit()
 
-    sdl3.GL_SetAttribute(sdl3.GL_CONTEXT_PROFILE_MASK, i32(sdl3.GLProfileFlag.ES))
-    sdl3.GL_SetAttribute(sdl3.GL_CONTEXT_MAJOR_VERSION, 3)
-    sdl3.GL_SetAttribute(sdl3.GL_CONTEXT_MINOR_VERSION, 2)
+    when ODIN_OS == .Darwin {
+        sdl3.GL_SetAttribute(.CONTEXT_FLAGS, i32(sdl3.GLContextFlag.FORWARD_COMPATIBLE))
+        sdl3.GL_SetAttribute(.CONTEXT_PROFILE_MASK, i32(sdl3.GLProfile.COMPATIBILITY))
+        sdl3.GL_SetAttribute(.CONTEXT_MAJOR_VERSION, 3)
+        sdl3.GL_SetAttribute(.CONTEXT_MINOR_VERSION, 3)
+    } else {
+        sdl3.GL_SetAttribute(.CONTEXT_PROFILE_MASK, i32(sdl3.GLProfileFlag.ES))
+        sdl3.GL_SetAttribute(.CONTEXT_MAJOR_VERSION, 3)
+        sdl3.GL_SetAttribute(.CONTEXT_MINOR_VERSION, 0)
+    }
 
     window := sdl3.CreateWindow("GLES 3.0 Renderer", 1152, 648, sdl3.WINDOW_OPENGL | sdl3.WINDOW_RESIZABLE)
     if window == nil {
@@ -174,14 +181,22 @@ bytes_to_cstring :: proc(bytes: []byte, allocator: runtime.Allocator = context.a
     return strings.clone_to_cstring(str, allocator)
 }
 
+when ODIN_OS == .Darwin {
+    SHADER_VERSION: cstring = "#version 330 core\n"
+} else {
+    SHADER_VERSION: cstring = "#version 320 es\n"
+}
+
 load_shader :: proc(gl: ^glad.gl_context, fragment_path: string, vertex_path: string, allocator: runtime.Allocator = context.allocator) -> u32 {
     os_err: os.Error
     alloc_err: runtime.Allocator_Error
     frag_src, vert_src: []byte
     frag_str, vert_str: cstring
     frag_id, vert_id, program_id: u32
-    success: i32
+    success, length: i32
     failure_log: [512]u8
+    strs: [2]cstring = {SHADER_VERSION,  nil}
+    lengths: [2]i32 = {i32(len(SHADER_VERSION)), 0}
 
     frag_src, os_err = os.read_entire_file(fragment_path, allocator)
     if os_err != nil {
@@ -199,7 +214,9 @@ load_shader :: proc(gl: ^glad.gl_context, fragment_path: string, vertex_path: st
     frag_id = gl.CreateShader(glad.FRAGMENT_SHADER)
     defer gl.DeleteShader(frag_id)
 
-    gl.ShaderSource(frag_id, 1, &frag_str, cast(i32) len(frag_str))
+    strs[1] = frag_str
+    lengths[1] = i32(len(frag_str))
+    gl.ShaderSource(frag_id, 2, raw_data(&strs), raw_data(&lengths))
     delete(frag_str, allocator)
 
     gl.CompileShader(frag_id)
@@ -226,7 +243,9 @@ load_shader :: proc(gl: ^glad.gl_context, fragment_path: string, vertex_path: st
     vert_id = gl.CreateShader(glad.VERTEX_SHADER)
     defer gl.DeleteShader(vert_id)
 
-    gl.ShaderSource(vert_id, 1, &vert_str, cast(i32) len(vert_str))
+    strs[1] = vert_str
+    lengths[1] = i32(len(vert_str))
+    gl.ShaderSource(vert_id, 2, raw_data(&strs), raw_data(&lengths))
     delete(vert_str, allocator)
 
     gl.CompileShader(vert_id)

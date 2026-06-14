@@ -1,3 +1,25 @@
+package glad
+
+import c "core:c"
+
+void :: rawptr
+GLuint :: c.uint
+GLint :: c.int
+GLenum :: c.uint
+GLchar :: c.char
+GLintptr :: c.intptr_t
+GLboolean :: c.uchar
+GLsizeiptr :: c.ssize_t
+GLsizei :: c.int
+GLfloat :: c.float
+GLbitfield :: c.uint
+GLuint64 :: c.uint64_t
+GLint64 :: c.int64_t
+GLsync :: rawptr
+GLubyte :: c.uint8_t
+
+DebugProc :: proc "c" (source: GLenum, type: GLenum, id: GLuint, severity: GLenum, length: GLsizei, message: cstring, userParam: rawptr)
+
 ACTIVE_ATTRIBUTES :: 0x8B89
 ACTIVE_ATTRIBUTE_MAX_LENGTH :: 0x8B8A
 ACTIVE_TEXTURE :: 0x84E0

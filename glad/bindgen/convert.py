@@ -2,11 +2,8 @@ def ctype_to_odin(type):
     zig_return = type
 
     if type.startswith("const"):
-        zig_return = "#by_ptr " + zig_return.split("const ")[1]
-
-        if zig_return.endswith("*"):
-            zig_return = zig_return.split("*")[0].strip()
-    elif zig_return.endswith("*"):
+        zig_return = zig_return.split("const ")[1]
+    if zig_return.endswith("*"):
         zig_return = "^" + zig_return.split("*")[0]
     # if not zig_return.endswith("void"):
     #     split_return = zig_return.split(" ")
