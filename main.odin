@@ -35,7 +35,7 @@ main :: proc() {
     } else {
         sdl3.GL_SetAttribute(.CONTEXT_PROFILE_MASK, i32(sdl3.GLProfileFlag.ES))
         sdl3.GL_SetAttribute(.CONTEXT_MAJOR_VERSION, 3)
-        sdl3.GL_SetAttribute(.CONTEXT_MINOR_VERSION, 0)
+        sdl3.GL_SetAttribute(.CONTEXT_MINOR_VERSION, 2)
     }
 
     window := sdl3.CreateWindow("GLES 3.0 Renderer", 1152, 648, sdl3.WINDOW_OPENGL | sdl3.WINDOW_RESIZABLE)
